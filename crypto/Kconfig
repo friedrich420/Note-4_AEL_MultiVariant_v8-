@@ -1363,6 +1363,7 @@ config CRYPTO_842
 	help
 	  This is the 842 algorithm.
 
+<<<<<<< HEAD
 config CRYPTO_842
 	tristate "842 compression algorithm"
 	depends on CRYPTO_DEV_NX_COMPRESS
@@ -1372,6 +1373,8 @@ config CRYPTO_842
 	help
 	  This is the 842 algorithm.
 
+=======
+>>>>>>> f653fcb... compress: add LZ4 support
 config CRYPTO_LZ4
 	tristate "LZ4 compression algorithm"
 	select CRYPTO_ALGAPI

@@ -314,7 +314,11 @@ static inline int lz4_encodesequence(const u8 **ip, u8 **op, const u8 **anchor,
 	return 0;
 }
 
+<<<<<<< HEAD
 static int lz4_compresshcctx(struct lz4hc_data *ctx,
+=======
+int lz4_compresshcctx(struct lz4hc_data *ctx,
+>>>>>>> f653fcb... compress: add LZ4 support
 		const char *source,
 		char *dest,
 		int isize)
@@ -533,7 +537,13 @@ int lz4hc_compress(const unsigned char *src, size_t src_len,
 exit:
 	return ret;
 }
+<<<<<<< HEAD
 EXPORT_SYMBOL(lz4hc_compress);
 
 MODULE_LICENSE("Dual BSD/GPL");
+=======
+EXPORT_SYMBOL_GPL(lz4hc_compress);
+
+MODULE_LICENSE("GPL");
+>>>>>>> f653fcb... compress: add LZ4 support
 MODULE_DESCRIPTION("LZ4HC compressor");
