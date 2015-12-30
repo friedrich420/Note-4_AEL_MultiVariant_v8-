@@ -39,10 +39,6 @@
 /* Globals */
 static int zram_major;
 static struct zram *zram_devices;
-<<<<<<< HEAD:drivers/staging/zram/zram_drv.c
-=======
-static const char *default_compressor = "lz4";
->>>>>>> 9c2e2a9... zram: LZ4 as default compressor:drivers/block/zram/zram_drv.c
 
 /*
  * We don't need to see memory allocation errors more than once every 1
