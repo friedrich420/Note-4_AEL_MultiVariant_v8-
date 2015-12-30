@@ -3,9 +3,25 @@
  *
  * Copyright (C) 2013, LG Electronics, Kyungsik Lee <kyungsik.lee@lge.com>
  *
+<<<<<<< HEAD
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
+=======
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2,
+ * or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+>>>>>>> f653fcb... compress: add LZ4 support
  */
 
 #ifdef STATIC
@@ -21,6 +37,7 @@
 
 #include <asm/unaligned.h>
 
+<<<<<<< HEAD
 /*
  * Note: Uncompressed chunk size is used in the compressor side
  * (userspace side for compression).
@@ -29,6 +46,10 @@
  * version of LZ4 tool so far.
  */
 #define LZ4_DEFAULT_UNCOMPRESSED_CHUNK_SIZE (8 << 20)
+=======
+
+#define LZ4_CHUNK_SIZE (8<<20)
+>>>>>>> f653fcb... compress: add LZ4 support
 #define ARCHIVE_MAGICNUMBER 0x184C2102
 
 STATIC inline int INIT unlz4(u8 *input, int in_len,
@@ -39,7 +60,10 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 {
 	int ret = -1;
 	size_t chunksize = 0;
+<<<<<<< HEAD
 	size_t uncomp_chunksize = LZ4_DEFAULT_UNCOMPRESSED_CHUNK_SIZE;
+=======
+>>>>>>> f653fcb... compress: add LZ4 support
 	u8 *inp;
 	u8 *inp_start;
 	u8 *outp;
@@ -56,7 +80,11 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 		error("NULL output pointer and no flush function provided");
 		goto exit_0;
 	} else {
+<<<<<<< HEAD
 		outp = large_malloc(uncomp_chunksize);
+=======
+		outp = large_malloc(LZ4_CHUNK_SIZE);
+>>>>>>> f653fcb... compress: add LZ4 support
 		if (!outp) {
 			error("Could not allocate output buffer");
 			goto exit_0;
@@ -72,7 +100,11 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 		error("NULL input pointer and missing fill function");
 		goto exit_1;
 	} else {
+<<<<<<< HEAD
 		inp = large_malloc(lz4_compressbound(uncomp_chunksize));
+=======
+		inp = large_malloc(LZ4_COMPRESSBOUND(LZ4_CHUNK_SIZE));
+>>>>>>> f653fcb... compress: add LZ4 support
 		if (!inp) {
 			error("Could not allocate input buffer");
 			goto exit_1;
@@ -83,20 +115,13 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 	if (posp)
 		*posp = 0;
 
-	if (fill) {
-		size = fill(inp, 4);
-		if (size < 4) {
-			error("data corrupted");
-			goto exit_2;
-		}
-	}
+	if (fill)
+		fill(inp, 4);
 
 	chunksize = get_unaligned_le32(inp);
 	if (chunksize == ARCHIVE_MAGICNUMBER) {
-		if (!fill) {
-			inp += 4;
-			size -= 4;
-		}
+		inp += 4;
+		size -= 4;
 	} else {
 		error("invalid header");
 		goto exit_2;
@@ -107,54 +132,52 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 
 	for (;;) {
 
-		if (fill) {
-			size = fill(inp, 4);
-			if (size == 0)
-				break;
-			if (size < 4) {
-				error("data corrupted");
-				goto exit_2;
-			}
-		}
+		if (fill)
+			fill(inp, 4);
 
 		chunksize = get_unaligned_le32(inp);
 		if (chunksize == ARCHIVE_MAGICNUMBER) {
-			if (!fill) {
-				inp += 4;
-				size -= 4;
-			}
+			inp += 4;
+			size -= 4;
 			if (posp)
 				*posp += 4;
 			continue;
 		}
-
+		inp += 4;
+		size -= 4;
 
 		if (posp)
 			*posp += 4;
 
-		if (!fill) {
-			inp += 4;
-			size -= 4;
-		} else {
+		if (fill) {
+<<<<<<< HEAD
 			if (chunksize > lz4_compressbound(uncomp_chunksize)) {
+=======
+			if (chunksize > LZ4_COMPRESSBOUND(LZ4_CHUNK_SIZE)) {
+>>>>>>> f653fcb... compress: add LZ4 support
 				error("chunk length is longer than allocated");
 				goto exit_2;
 			}
-			size = fill(inp, chunksize);
-			if (size < chunksize) {
-				error("data corrupted");
-				goto exit_2;
-			}
+			fill(inp, chunksize);
 		}
 #ifdef PREBOOT
+<<<<<<< HEAD
 		if (out_len >= uncomp_chunksize) {
 			dest_len = uncomp_chunksize;
+=======
+		if (out_len >= LZ4_CHUNK_SIZE) {
+			dest_len = LZ4_CHUNK_SIZE;
+>>>>>>> f653fcb... compress: add LZ4 support
 			out_len -= dest_len;
 		} else
 			dest_len = out_len;
 		ret = lz4_decompress(inp, &chunksize, outp, dest_len);
 #else
+<<<<<<< HEAD
 		dest_len = uncomp_chunksize;
+=======
+		dest_len = LZ4_CHUNK_SIZE;
+>>>>>>> f653fcb... compress: add LZ4 support
 		ret = lz4_decompress_unknownoutputsize(inp, chunksize, outp,
 				&dest_len);
 #endif
@@ -163,7 +186,6 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 			goto exit_2;
 		}
 
-		ret = -1;
 		if (flush && flush(outp, dest_len) != dest_len)
 			goto exit_2;
 		if (output)
@@ -171,17 +193,18 @@ STATIC inline int INIT unlz4(u8 *input, int in_len,
 		if (posp)
 			*posp += chunksize;
 
-		if (!fill) {
-			size -= chunksize;
+		size -= chunksize;
 
-			if (size == 0)
-				break;
-			else if (size < 0) {
-				error("data corrupted");
-				goto exit_2;
-			}
-			inp += chunksize;
+		if (size == 0)
+			break;
+		else if (size < 0) {
+			error("data corrupted");
+			goto exit_2;
 		}
+
+		inp += chunksize;
+		if (fill)
+			inp = inp_start;
 	}
 
 	ret = 0;
