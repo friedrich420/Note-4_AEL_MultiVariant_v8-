@@ -66,14 +66,11 @@ static int lz4_decompress_crypto(struct crypto_tfm *tfm, const u8 *src,
 {
 	int err;
 	size_t tmp_len = *dlen;
-<<<<<<< HEAD
 	size_t __slen = slen;
 
 	err = lz4_decompress(src, &__slen, dst, tmp_len);
-=======
 
 	err = lz4_decompress(src, &slen, dst, tmp_len);
->>>>>>> f653fcb... compress: add LZ4 support
 	if (err < 0)
 		return -EINVAL;
 
