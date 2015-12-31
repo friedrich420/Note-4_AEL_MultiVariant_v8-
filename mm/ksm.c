@@ -347,7 +347,7 @@ static void insert_to_mm_slots_hash(struct mm_struct *mm,
  * ksm_test_exit() is used throughout to make this test for exit: in some
  * places for correctness, in some places just to avoid unnecessary work.
  */
-static inline bool ksm_test_exit(struct mm_struct *mm)
+static int ksm_test_exit(struct mm_struct *mm)
 {
 	return atomic_read(&mm->mm_users) == 0;
 }
