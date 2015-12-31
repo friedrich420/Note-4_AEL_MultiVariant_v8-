@@ -33,7 +33,8 @@ modules.builtin
 *.lz4
 *.patch
 *.gcno
-image
+Image
+zImage
 
 #
 # Top-level generic files
