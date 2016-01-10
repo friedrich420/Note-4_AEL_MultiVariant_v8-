@@ -854,14 +854,6 @@ int mdss_mdp_video_start(struct mdss_mdp_ctl *ctl)
 				   mdss_mdp_video_vsync_intr_done, ctl);
 	mdss_mdp_set_intr_callback(MDSS_MDP_IRQ_INTF_UNDER_RUN, ctl->intf_num,
 				   mdss_mdp_video_underrun_intr_done, ctl);
-<<<<<<< HEAD
-
-#if defined(CONFIG_FB_MSM_MDSS_SAMSUNG)
-	mdss_mdp_set_intr_callback(MDSS_MDP_IRQ_PING_PONG_COMP,
-					ctl->mixer_left->num,  mdss_mdp_video_pingpong_done, ctl);
-#endif
-=======
->>>>>>> 4d5f477... Drop POK1 Source Code
 
 	dst_bpp = pinfo->fbc.enabled ? (pinfo->fbc.target_bpp) : (pinfo->bpp);
 
@@ -899,13 +891,7 @@ int mdss_mdp_video_start(struct mdss_mdp_ctl *ctl)
 	ctl->add_vsync_handler = mdss_mdp_video_add_vsync_handler;
 	ctl->remove_vsync_handler = mdss_mdp_video_remove_vsync_handler;
 	ctl->config_fps_fnc = mdss_mdp_video_config_fps;
-<<<<<<< HEAD
 
-#if defined(CONFIG_FB_MSM_MDSS_SAMSUNG)
-	ctl->wait_video_pingpong = mdss_mdp_video_wait4pingpong;
-#endif
-=======
->>>>>>> 4d5f477... Drop POK1 Source Code
 
 	return 0;
 }

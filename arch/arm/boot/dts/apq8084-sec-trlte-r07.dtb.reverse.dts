@@ -1992,7 +1992,7 @@
 			qcom,initial-pwrlevel = <0x6>;
 			qcom,idle-timeout = <0x8>;
 			qcom,strtstp-sleepwake;
-			qcom,clk-map = <0x86>;
+			qcom,clk-map = <0x6>;
 			qcom,pm-qos-active-latency = <0x1f5>;
 			qcom,pm-qos-wakeup-latency = <0x65>;
 			qcom,bus-control;

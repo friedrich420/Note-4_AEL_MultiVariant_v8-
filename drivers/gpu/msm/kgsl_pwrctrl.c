@@ -343,6 +343,19 @@ static ssize_t kgsl_pwrctrl_min_pwrlevel_show(struct device *dev,
 	return snprintf(buf, PAGE_SIZE, "%u\n", pwr->min_pwrlevel);
 }
 
+static ssize_t kgsl_pwrctrl_active_pwrlevel_show(struct device *dev,
+                    struct device_attribute *attr,
+                    char *buf)
+{
+	struct kgsl_device *device = kgsl_device_from_dev(dev);
+	struct kgsl_pwrctrl *pwr;
+	if (device == NULL)
+		return 0;
+	pwr = &device->pwrctrl;
+	return snprintf(buf, PAGE_SIZE, "%d\n", pwr->active_pwrlevel);
+}
+
+
 static ssize_t kgsl_pwrctrl_num_pwrlevels_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -814,6 +827,9 @@ static DEVICE_ATTR(max_pwrlevel, 0644,
 static DEVICE_ATTR(min_pwrlevel, 0644,
 	kgsl_pwrctrl_min_pwrlevel_show,
 	kgsl_pwrctrl_min_pwrlevel_store);
+static DEVICE_ATTR(active_pwrlevel, 0444,
+	kgsl_pwrctrl_active_pwrlevel_show,
+	NULL);
 static DEVICE_ATTR(thermal_pwrlevel, 0644,
 	kgsl_pwrctrl_thermal_pwrlevel_show,
 	kgsl_pwrctrl_thermal_pwrlevel_store);
@@ -851,6 +867,7 @@ static const struct device_attribute *pwrctrl_attr_list[] = {
 	&dev_attr_gpu_available_frequencies,
 	&dev_attr_max_pwrlevel,
 	&dev_attr_min_pwrlevel,
+	&dev_attr_active_pwrlevel,
 	&dev_attr_thermal_pwrlevel,
 	&dev_attr_num_pwrlevels,
 	&dev_attr_pmqos_active_latency,
@@ -1113,13 +1130,6 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 	if (pwr->pwrlevels[0].gpu_freq > 0)
 		clk_set_rate(pwr->grp_clks[0], pwr->
 				pwrlevels[pwr->num_pwrlevels - 1].gpu_freq);
-<<<<<<< HEAD
-	rbbmtimer_freq = clk_round_rate(pwr->grp_clks[6],
-						KGSL_RBBMTIMER_CLK_FREQ);
-		clk_set_rate(pwr->grp_clks[6], rbbmtimer_freq);
-	}
-=======
->>>>>>> 4d5f477... Drop POK1 Source Code
 
 	pwr->gpu_reg = regulator_get(&pdev->dev, "vdd");
 	if (IS_ERR(pwr->gpu_reg))
