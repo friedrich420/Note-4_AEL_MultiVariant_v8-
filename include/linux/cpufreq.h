@@ -610,6 +610,9 @@ extern struct cpufreq_governor cpufreq_gov_abyssplugv2;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_PSYCHOACTIVE)
 extern struct cpufreq_governor cpufreq_gov_psychoactive;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_psychoactive)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVEX)
+extern struct cpufreq_governor cpufreq_gov_interactivex;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_interactivex)
 #endif
 
 /*********************************************************************
