@@ -206,7 +206,7 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 
 #ARCH		?= $(SUBARCH)
 #CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
-ARCH		= arm64
+ARCH		= arm
 ifdef CONFIG_WITH_CCACHE
 CROSS_COMPILE = $(CCACHE) $(TOOLCHAIN_DIR)
 else
