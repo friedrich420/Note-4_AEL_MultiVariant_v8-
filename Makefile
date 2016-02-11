@@ -4,6 +4,17 @@ SUBLEVEL = 96
 EXTRAVERSION =
 NAME = TOSSUG Baby Fish
 
+#TOOLCHAIN_DIR = $(CURDIR)/toolchain/arm-linux-gnueabi-5.3/bin/arm-eabi-
+TOOLCHAIN_DIR = /home/friedrich420/kernel/arm-linux-gnueabi-5.3/bin/arm-eabi-
+
+ifdef CONFIG_WITH_CCACHE
+ccache := ccache
+endif
+
+ifdef CONFIG_WITH_GRAPHITE
+GRAPHITE = -fgraphite-identity -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block -floop-flatten -floop-nest-optimize -fgraphite
+endif
+
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
 # More info can be located in ./README
@@ -158,8 +169,6 @@ VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
 
 export srctree objtree VPATH
 
-CCACHE := ccache
-
 
 # SUBARCH tells the usermode build what the underlying arch is.  That is set
 # first, and if a usermode build is happening, the "ARCH=um" on the command
@@ -194,8 +203,15 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # "make" in the configured kernel build directory always uses that.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-ARCH		?= $(SUBARCH)
-CROSS_COMPILE	?= ${CCACHE} /home/friedrich420/kernel/arm-linux-gnueabi-5.3/bin/arm-eabi-
+
+#ARCH		?= $(SUBARCH)
+#CROSS_COMPILE	?= $(CONFIG_CROSS_COMPILE:"%"=%)
+ARCH		= arm64
+ifdef CONFIG_WITH_CCACHE
+CROSS_COMPILE = $(CCACHE) $(TOOLCHAIN_DIR)
+else
+CROSS_COMPILE = $(TOOLCHAIN_DIR)
+endif
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -241,10 +257,21 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 	  else if [ -x /bin/bash ]; then echo /bin/bash; \
 	  else echo sh; fi ; fi)
 
+ifdef CONFIG_WITH_CCACHE
+HOSTCC       = $(CCACHE) gcc
+HOSTCXX      = $(CCACHE) g++
+else
+
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
-HOSTCXXFLAGS = -O2
+endif
+ifdef CONFIG_WITH_GRAPHITE
+HOSTCFLAGS   = $(GRAPHITE) -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -std=gnu89 -floop-nest-optimize
+HOSTCXXFLAGS = $(GRAPHITE) -Ofast
+else
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -std=gnu89 -floop-nest-optimize
+HOSTCXXFLAGS = -Ofast
+endif
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -328,8 +355,24 @@ include $(srctree)/scripts/Kbuild.include
 
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
-REAL_CC		= $(CROSS_COMPILE)gcc
+ifdef CONFIG_WITH_CCACHE
+	ifdef CONFIG_WITH_GRAPHITE
+		CC		= $(CCACHE) $(GRAPHITE) $(CROSS_COMPILE)gcc
+	else
+		CC		= $(CCACHE) $(CROSS_COMPILE)gcc	
+	endif
+else
+	ifdef CONFIG_WITH_GRAPHITE
+		CC		= $(GRAPHITE) $(CROSS_COMPILE)gcc
+	else
+		CC		= $(CROSS_COMPILE)gcc
+	endif
+endif
+ifdef CONFIG_WITH_GRAPHITE
+CPP		= $(GRAPHITE) $(CC) -E
+else
 CPP		= $(CC) -E
+endif
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
 STRIP		= $(CROSS_COMPILE)strip
@@ -354,12 +397,19 @@ CC=$(REAL_CC)
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
-AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
-CFLAGS_KERNEL	=
-AFLAGS_KERNEL	=
-CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
+ifdef CONFIG_WITH_GRAPHITE
+CFLAGS_MODULE   = $(GRAPHITE) 
+AFLAGS_MODULE   = $(GRAPHITE) 
+LDFLAGS_MODULE  = $(GRAPHITE) 
+CFLAGS_KERNEL	= $(GRAPHITE) -fsingle-precision-constant
+AFLAGS_KERNEL	= $(GRAPHITE) 
+else
+CFLAGS_MODULE   = 
+AFLAGS_MODULE   = 
+LDFLAGS_MODULE  = 
+CFLAGS_KERNEL	= -fsingle-precision-constant
+AFLAGS_KERNEL	= 
+endif
 
 
 # Use USERINCLUDE when you must reference the UAPI directories only.
@@ -381,18 +431,39 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common -Wno-unused-value \
-		   -Werror-implicit-function-declaration -Wno-uninitialized \
-		   -Wno-format-security -Wno-array-bounds -Wno-unused-variable -Wno-unused-function \
-		   -Wno-sequence-point \
-		   -Wno-switch \
-		   -Wno-switch-bool \
-		   -Wno-switch-enum \
-		   -Wno-logical-not-parentheses \
-		   -Wno-bool-compare \
-		   -fno-aggressive-loop-optimizations \
-		   -fno-delete-null-pointer-checks -fno-pic -Wno-maybe-uninitialized
+ifdef CONFIG_WITH_GRAPHITE
+KBUILD_CFLAGS   := -DNDEBUG $(GRAPHITE) -w -Wstrict-prototypes -Wno-trigraphs \
+		   -fno-strict-aliasing -finline-functions -fno-common \
+		   -Werror-implicit-function-declaration -fno-pic \
+		   -Wno-format-security -ffast-math \
+ 		   -fno-delete-null-pointer-checks \
+  		   -Werror -Wno-error=unused-variable -Wno-error=unused-function \
+  		   -Wno-switch-bool \
+  		   -Wno-switch-enum \
+  		   -fdiagnostics-show-option -Werror
+		   -fdiagnostics-show-option \
+		   -pipe  -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+		   -ftree-loop-distribution -ftree-loop-if-convert -fivopts -fipa-pta -fira-hoist-pressure \
+		   -fmodulo-sched -fmodulo-sched-allow-regmoves \
+		   -fbranch-target-load-optimize -fsingle-precision-constant \
+		   -Werror -Wno-error=unused-variable -Wno-error=unused-function \
+		   -std=gnu89 -Wno-discarded-array-qualifiers -Wno-logical-not-parentheses -Wno-array-bounds -Wno-switch -Wno-unused-variable \
+		   -march=armv8-a+crc
+else
+KBUILD_CFLAGS   := -DNDEBUG -w -Wstrict-prototypes -Wno-trigraphs \
+		   -fno-strict-aliasing -finline-functions -fno-common \
+		   -Werror-implicit-function-declaration -fno-pic \
+		   -Wno-format-security -ffast-math \
+		   -fno-delete-null-pointer-checks \
+		   -fdiagnostics-show-option \
+		   -pipe  -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+		   -ftree-loop-distribution -ftree-loop-if-convert -fivopts -fipa-pta -fira-hoist-pressure \
+		   -fmodulo-sched -fmodulo-sched-allow-regmoves \
+		   -fbranch-target-load-optimize -fsingle-precision-constant \
+		   -Werror -Wno-error=unused-variable -Wno-error=unused-function \
+		   -std=gnu89 -Wno-discarded-array-qualifiers -Wno-logical-not-parentheses -Wno-array-bounds -Wno-switch -Wno-unused-variable \
+		   -march=armv8-a+crc
+endif
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -592,7 +663,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -Ofast $(call cc-disable-warning,maybe-uninitialized,)
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
