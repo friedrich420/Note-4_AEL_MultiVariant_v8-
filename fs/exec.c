@@ -19,7 +19,7 @@
  * current->executable is only used by the procfs.  This allows a dispatch
  * table to check for several different types  of binary formats.  We keep
  * trying until we recognize the file or we run out of supported binary
- * formats.
+ * formats. 
  */
 
 #include <linux/slab.h>
@@ -1146,7 +1146,7 @@ void setup_new_exec(struct linux_binprm * bprm)
 	   group */
 
 	current->self_exec_id++;
-
+			
 	flush_signal_handlers(current, 0);
 	do_close_on_exec(current->files);
 }
@@ -1286,11 +1286,7 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
 	if (bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID)
 		return;
 
-<<<<<<< HEAD
-	if (current->no_new_privs)
-=======
 	if (task_no_new_privs(current))
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
 		return;
 
 	inode = file_inode(bprm->file);
@@ -1324,7 +1320,7 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
 }
 
 /* 
- * Fill the binprm structure from the inode.
+ * Fill the binprm structure from the inode. 
  * Check permissions, then read the first 128 (BINPRM_BUF_SIZE) bytes
  *
  * This may be called multiple times for binary chains (scripts for example).

@@ -874,13 +874,11 @@ static int sec_chg_set_property(struct power_supply *psy,
 	int set_charging_current, set_charging_current_max;
 	const int usb_charging_current = charger->pdata->charging_current[
 		POWER_SUPPLY_TYPE_USB].fast_charging_current;
-<<<<<<< HEAD
 	int current_now = 0;
-=======
+
 #if defined(CONFIG_BATTERY_SWELLING)
 	u8 reg_data;
 #endif	
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:

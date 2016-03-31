@@ -12589,13 +12589,8 @@ void wl_cfg80211_detach(void *para)
 static void wl_wakeup_event(struct bcm_cfg80211 *cfg)
 {
 	dhd_pub_t *dhd = (dhd_pub_t *)(cfg->pub);
-<<<<<<< HEAD
-	if (dhd->up && (cfg->event_tsk.thr_pid >= 0)) {
-		DHD_OS_WAKE_LOCK(cfg->pub);
-=======
 
 	if (dhd->up && (cfg->event_tsk.thr_pid >= 0)) {
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
 		up(&cfg->event_tsk.sema);
 	}
 }
@@ -12658,14 +12653,8 @@ static s32 wl_event_handler(void *data)
 				WL_DBG(("Unknown Event (%d): ignoring\n", e->etype));
 			}
 			wl_put_event(e);
-<<<<<<< HEAD
-
-		DHD_OS_WAKE_UNLOCK(cfg->pub);
-=======
 			DHD_EVENT_WAKE_UNLOCK(cfg->pub);
 		}
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
-	}
 	}
 	WL_ERR(("was terminated\n"));
 	complete_and_exit(&tsk->completed, 0);
