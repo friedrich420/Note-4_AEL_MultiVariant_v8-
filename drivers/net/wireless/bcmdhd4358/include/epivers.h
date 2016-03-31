@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2015, Broadcom Corporation
+ * Copyright (C) 1999-2016, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -30,19 +30,27 @@
 
 #define	EPI_MINOR_VERSION	47
 
-#define	EPI_RC_NUMBER		35
+#define	EPI_RC_NUMBER		42
 
-#define	EPI_INCREMENTAL_NUMBER	0
+#define	EPI_INCREMENTAL_NUMBER	2
 
 #define	EPI_BUILD_NUMBER	0
 
+<<<<<<< HEAD
 #define	EPI_VERSION		1, 47, 35, 0, 1
+=======
+#define	EPI_VERSION		1, 47, 42, 2
+>>>>>>> e3cbb8c... Drop DPB9 (MM) Source Code
 
-#define	EPI_VERSION_NUM		0x012f2300
+#define	EPI_VERSION_NUM		0x012f2a02
 
-#define EPI_VERSION_DEV		1.47.35
+#define EPI_VERSION_DEV		1.47.42
 
 /* Driver Version String, ASCII, 32 chars max */
+<<<<<<< HEAD
 #define	EPI_VERSION_STR		"1.47.35.0.1 (r)"
+=======
+#define	EPI_VERSION_STR		"1.47.42.2 (security_patch)"
+>>>>>>> e3cbb8c... Drop DPB9 (MM) Source Code
 
 #endif /* _epivers_h_ */
