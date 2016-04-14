@@ -36,21 +36,13 @@
 
 #define	EPI_BUILD_NUMBER	0
 
-<<<<<<< HEAD
-#define	EPI_VERSION		1, 47, 35, 0, 1
-=======
 #define	EPI_VERSION		1, 47, 42, 2
->>>>>>> e3cbb8c... Drop DPB9 (MM) Source Code
 
 #define	EPI_VERSION_NUM		0x012f2a02
 
 #define EPI_VERSION_DEV		1.47.42
 
 /* Driver Version String, ASCII, 32 chars max */
-<<<<<<< HEAD
-#define	EPI_VERSION_STR		"1.47.35.0.1 (r)"
-=======
 #define	EPI_VERSION_STR		"1.47.42.2 (security_patch)"
->>>>>>> e3cbb8c... Drop DPB9 (MM) Source Code
 
 #endif /* _epivers_h_ */

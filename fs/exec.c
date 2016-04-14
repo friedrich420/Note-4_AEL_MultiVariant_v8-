@@ -1286,11 +1286,7 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
 	if (bprm->file->f_path.mnt->mnt_flags & MNT_NOSUID)
 		return;
 
-<<<<<<< HEAD
-	if (current->no_new_privs)
-=======
 	if (task_no_new_privs(current))
->>>>>>> e3cbb8c... Drop DPB9 (MM) Source Code
 		return;
 
 	inode = file_inode(bprm->file);
