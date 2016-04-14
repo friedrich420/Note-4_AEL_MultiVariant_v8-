@@ -194,14 +194,8 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/x86/ -e s/x86_64/x86/ \
 # "make" in the configured kernel build directory always uses that.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-<<<<<<< HEAD
 ARCH		?= $(SUBARCH)
 CROSS_COMPILE	?= ${CCACHE} /home/friedrich420/kernel/arm-cortex_a15-linux-gnueabihf-linaro_5.3/bin/arm-cortex_a15-linux-gnueabihf-
-=======
-export KBUILD_BUILDHOST := $(SUBARCH)
-ARCH		?=arm
-CROSS_COMPILE	?=/opt/toolchains/arm-eabi-4.7/bin/arm-eabi-
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -355,12 +349,8 @@ endif
 
 # Use the wrapper for the compiler.  This wrapper scans for new
 # warnings and causes the build to stop upon encountering them.
-<<<<<<< HEAD
 #CC		= $(srctree)/scripts/gcc-wrapper.py $(REAL_CC)
 CC=$(REAL_CC)
-=======
-CC		= $(REAL_CC)
->>>>>>> 80af584... Drop DPB9 (MM) Source Code
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
@@ -707,9 +697,6 @@ LDFLAGS_vmlinux += $(LDFLAGS_BUILD_ID)
 ifeq ($(CONFIG_STRIP_ASM_SYMS),y)
 LDFLAGS_vmlinux	+= $(call ld-option, -X,)
 endif
-
-LDFLAGS_vmlinux += $(call ld-option, --fix-cortex-a53-843419)
-LDFLAGS_MODULE += $(call ld-option, --fix-cortex-a53-843419)
 
 # Default kernel image to build when no specific target is given.
 # KBUILD_IMAGE may be overruled on the command line or

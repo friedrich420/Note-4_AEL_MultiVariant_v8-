@@ -1,17 +1,4 @@
 /*
- * Copyright (c) 2013-2014 TRUSTONIC LIMITED
- * All Rights Reserved.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- */
-/*
  * MobiCore Driver Kernel Module.
  *
  * This driver represents the command proxy on the lowest layer, from the
@@ -22,6 +9,13 @@
  * The access to the driver is possible with a file descriptor,
  * which has to be created by the fd = open(/dev/mobicore) command or
  * fd = open(/dev/mobicore-user)
+ *
+ * <-- Copyright Giesecke & Devrient GmbH 2009-2012 -->
+ * <-- Copyright Trustonic Limited 2013 -->
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 #include <linux/miscdevice.h>
 #include <linux/interrupt.h>
@@ -41,7 +35,6 @@
 #include <net/tcp_states.h>
 #include <net/af_unix.h>
 
-
 #include "main.h"
 #include "fastcall.h"
 
@@ -52,10 +45,6 @@
 #include "debug.h"
 #include "logging.h"
 #include "build_tag.h"
-
-#if defined(MC_CRYPTO_CLOCK_MANAGEMENT) && defined(MC_USE_DEVICE_TREE)
-#include <linux/platform_device.h>
-#endif
 
 /* Define a MobiCore device structure for use with dev_debug() etc */
 struct device_driver mcd_debug_name = {
@@ -112,20 +101,21 @@ static struct mc_instance *get_instance(struct file *file)
 	return (struct mc_instance *)(file->private_data);
 }
 
-static uint32_t get_new_buffer_handle(void)
+/* Get a unique ID */
+uint32_t get_new_buffer_handle(void)
 {
-	uint32_t handle;
 	struct mc_buffer *buffer;
-	/* assumption ctx.bufs_lock mutex is locked */
+	uint32_t handle;
+
 retry:
-	handle = atomic_inc_return(&ctx.buffer_counter);
+	 handle = atomic_inc_return(&ctx.unique_counter);
 	/* The handle must leave 12 bits (PAGE_SHIFT) for the 12 LSBs to be
 	 * zero, as mmap requires the offset to be page-aligned, plus 1 bit for
 	 * the MSB to be 0 too, so mmap does not see the offset as negative
 	 * and fail.
 	 */
 	if ((handle << (PAGE_SHIFT+1)) == 0)  {
-		atomic_set(&ctx.buffer_counter, 1);
+		atomic_set(&ctx.unique_counter, 1);
 		handle = 1;
 	}
 	list_for_each_entry(buffer, &ctx.cont_bufs, list) {
@@ -226,8 +216,6 @@ bool mc_check_owner_fd(struct mc_instance *instance, int32_t fd)
 
 	rcu_read_lock();
 	fp = fcheck_files(current->files, fd);
-	if (fp == NULL)
-		goto out;
 	s = __get_socket(fp);
 	if (s)
 		peer = get_pid_task(s->sk_peer_pid, PIDTYPE_PID);
@@ -338,7 +326,7 @@ found_buffer:
 	mutex_unlock(&ctx.bufs_lock);
 	/* Only unmap if the request is coming from the user space and
 	 * it hasn't already been unmapped */
-	if (!unlock && buffer->uaddr != NULL) {
+	if (unlock == false && buffer->uaddr != NULL) {
 #ifndef MC_VM_UNMAP
 		/* do_munmap must be done with mm->mmap_sem taken */
 		down_write(&mm->mmap_sem);
@@ -400,9 +388,7 @@ int mc_get_buffer(struct mc_instance *instance,
 	void *addr = 0;
 	phys_addr_t phys = 0;
 	unsigned int order;
-#if defined(DEBUG_VERBOSE)
 	unsigned long allocated_size;
-#endif
 	int ret = 0;
 
 	if (WARN(!instance, "No instance data available"))
@@ -418,15 +404,13 @@ int mc_get_buffer(struct mc_instance *instance,
 		MCDRV_DBG_WARN(mcd, "Buffer size too large");
 		return -ENOMEM;
 	}
-#if defined(DEBUG_VERBOSE)
 	allocated_size = (1 << order) * PAGE_SIZE;
-#endif
 
 	if (mutex_lock_interruptible(&instance->lock))
 		return -ERESTARTSYS;
 
 	/* allocate a new buffer. */
-	cbuffer = kzalloc(sizeof(*cbuffer), GFP_KERNEL);
+	cbuffer = kzalloc(sizeof(struct mc_buffer), GFP_KERNEL);
 
 	if (cbuffer == NULL) {
 		MCDRV_DBG_WARN(mcd,
@@ -439,8 +423,7 @@ int mc_get_buffer(struct mc_instance *instance,
 	MCDRV_DBG_VERBOSE(mcd, "size %ld -> order %d --> %ld (2^n pages)",
 			  len, order, allocated_size);
 
-	addr = (void *)__get_free_pages(GFP_USER | __GFP_ZERO | __GFP_COMP,
-					order);
+	addr = (void *)__get_free_pages(GFP_USER | __GFP_ZERO, order);
 
 	if (addr == NULL) {
 		MCDRV_DBG_WARN(mcd, "get_free_pages failed");
@@ -462,7 +445,8 @@ int mc_get_buffer(struct mc_instance *instance,
 	list_add(&cbuffer->list, &ctx.cont_bufs);
 
 	MCDRV_DBG_VERBOSE(mcd,
-			  "allocd phys=0x%llx-0x%llx, size=%ld kvirt=0x%p h=%d",
+			  "allocated phys=0x%llx - 0x%llx, size=%ld, kvirt=0x%p"
+			  ", h=%d",
 			  (u64)phys,
 			  (u64)(phys+allocated_size),
 			  allocated_size, addr, cbuffer->handle);
@@ -707,7 +691,7 @@ static int mc_fd_mmap(struct file *file, struct vm_area_struct *vmarea)
 					goto found;
 				else
 					break;
-				}
+			}
 		}
 		/* Nothing found return */
 		mutex_unlock(&ctx.bufs_lock);
@@ -794,41 +778,13 @@ static long mc_fd_user_ioctl(struct file *file, unsigned int cmd,
 		ret = mc_free_buffer(instance, (uint32_t)arg);
 		break;
 
-	/* 32/64 bit interface compatiblity notice:
-	 * mc_ioctl_reg_wsm has been defined with the buffer parameter
-	 * as void* which means that the size and layout of the structure
-	 * are different between 32 and 64 bit variants.
-	 * However our 64 bit Linux driver must be able to service both
-	 * 32 and 64 bit clients so we have to allow both IOCTLs. Though
-	 * we have a bit of copy paste code we provide maximum backwards
-	 * compatiblity */
 	case MC_IO_REG_WSM:{
 		struct mc_ioctl_reg_wsm reg;
-		phys_addr_t phys = 0;
+		phys_addr_t phys;
 		if (copy_from_user(&reg, uarg, sizeof(reg)))
 			return -EFAULT;
 
-		ret = mc_register_wsm_mmu(instance,
-			(void *)(uintptr_t)reg.buffer,
-			reg.len, &reg.handle, &phys);
-		reg.table_phys = phys;
-
-		if (!ret) {
-			if (copy_to_user(uarg, &reg, sizeof(reg))) {
-				ret = -EFAULT;
-				mc_unregister_wsm_mmu(instance, reg.handle);
-			}
-		}
-		break;
-	}
-	case MC_COMPAT_REG_WSM:{
-		struct mc_compat_ioctl_reg_wsm reg;
-		phys_addr_t phys = 0;
-		if (copy_from_user(&reg, uarg, sizeof(reg)))
-			return -EFAULT;
-
-		ret = mc_register_wsm_mmu(instance,
-			(void *)(uintptr_t)reg.buffer,
+		ret = mc_register_wsm_mmu(instance, (void *)reg.buffer,
 			reg.len, &reg.handle, &phys);
 		reg.table_phys = phys;
 
@@ -1114,7 +1070,7 @@ struct mc_instance *mc_alloc_instance(void)
 		return NULL;
 
 	/* get a unique ID for this instance (PIDs are not unique) */
-	instance->handle = atomic_inc_return(&ctx.instance_counter);
+	instance->handle = get_new_buffer_handle();
 
 	mutex_init(&instance->lock);
 
@@ -1309,9 +1265,6 @@ static const struct file_operations mc_admin_fops = {
 	.open		= mc_fd_admin_open,
 	.release	= mc_fd_release,
 	.unlocked_ioctl	= mc_fd_admin_ioctl,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl   = mc_fd_admin_ioctl,
-#endif
 	.mmap		= mc_fd_mmap,
 	.read		= mc_fd_read,
 };
@@ -1322,9 +1275,6 @@ static const struct file_operations mc_user_fops = {
 	.open		= mc_fd_user_open,
 	.release	= mc_fd_release,
 	.unlocked_ioctl	= mc_fd_user_ioctl,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl   = mc_fd_user_ioctl,
-#endif
 	.mmap		= mc_fd_mmap,
 #if defined(TBASE_CORE_SWITCHER) && defined(DEBUG)
 	.write          = mc_fd_write,
@@ -1458,11 +1408,12 @@ static int __init mobicore_init(void)
 #endif
 
 	/*
-	 * initialize unique number counters which we can use for
-	 * handles. We start with 1 instead of 0.
+	 * initialize unique number counter which we can use for
+	 * handles. It is limited to 2^32, but this should be
+	 * enough to be roll-over safe for us. We start with 1
+	 * instead of 0.
 	 */
-	atomic_set(&ctx.buffer_counter, 1);
-	atomic_set(&ctx.instance_counter, 1);
+	atomic_set(&ctx.unique_counter, 1);
 
 	/* init list for contiguous buffers  */
 	INIT_LIST_HEAD(&ctx.cont_bufs);
@@ -1478,8 +1429,8 @@ free_pm:
 #ifdef MC_PM_RUNTIME
 	mc_pm_free();
 free_isr:
-#endif
 	free_irq(MC_INTR_SSIQ, &ctx);
+#endif
 err_req_irq:
 	mc_fastcall_destroy();
 error:
@@ -1489,7 +1440,7 @@ error:
 /*
  * This function removes this device driver from the Linux device manager .
  */
-static void mobicore_exit(void)
+static void __exit mobicore_exit(void)
 {
 	MCDRV_DBG_VERBOSE(mcd, "enter");
 #ifdef MC_MEM_TRACES
@@ -1527,69 +1478,10 @@ bool mc_sleep_ready(void)
 #endif
 }
 
-#if defined(MC_CRYPTO_CLOCK_MANAGEMENT) && defined(MC_USE_DEVICE_TREE)
-static int mcd_probe(struct platform_device *pdev)
-{
-	mcd->of_node = pdev->dev.of_node;
-	mobicore_init();
-	return 0;
-}
-
-static int mcd_remove(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static int mcd_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	return 0;
-}
-
-static int mcd_resume(struct platform_device *pdev)
-{
-	return 0;
-}
-
-static struct of_device_id mcd_match[] = {
-	{
-		.compatible = "qcom,mcd",
-	},
-	{}
-};
-
-static struct platform_driver mc_plat_driver = {
-	.probe = mcd_probe,
-	.remove = mcd_remove,
-	.suspend = mcd_suspend,
-	.resume = mcd_resume,
-	.driver = {
-		.name = "mcd",
-		.owner = THIS_MODULE,
-		.of_match_table = mcd_match,
-	},
-};
-
-static int mobicore_register(void)
-{
-	return platform_driver_register(&mc_plat_driver);
-}
-
-static void mobicore_unregister(void)
-{
-	platform_driver_unregister(&mc_plat_driver);
-	mobicore_exit();
-}
-
-module_init(mobicore_register);
-module_exit(mobicore_unregister);
-
-#else
-
+/* Linux Driver Module Macros */
 module_init(mobicore_init);
 module_exit(mobicore_exit);
-
-#endif
-
+MODULE_AUTHOR("Giesecke & Devrient GmbH");
 MODULE_AUTHOR("Trustonic Limited");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MobiCore driver");

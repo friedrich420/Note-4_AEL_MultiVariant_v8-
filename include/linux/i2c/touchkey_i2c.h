@@ -29,10 +29,8 @@ extern int poweroff_charging;
 #include <linux/earlysuspend.h>
 #endif
 
-#if defined(CONFIG_SEC_LENTIS_PROJECT)
+#ifdef CONFIG_SEC_LENTIS_PROJECT
 #define CYPRESS_RECENT_BACK_REPORT_FW_VER 0x24
-#elif defined(CONFIG_SEC_KCCAT6_PROJECT)
-#define CYPRESS_RECENT_BACK_REPORT_FW_VER 0x1D
 #else
 #define CYPRESS_RECENT_BACK_REPORT_FW_VER 0xFF
 #endif

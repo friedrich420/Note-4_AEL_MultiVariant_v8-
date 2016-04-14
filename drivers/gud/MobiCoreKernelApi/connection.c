@@ -1,15 +1,11 @@
 /*
- * Copyright (c) 2013 TRUSTONIC LIMITED
- * All Rights Reserved.
+ * Connection data.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
+ * <-- Copyright Giesecke & Devrient GmbH 2009 - 2012 -->
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  */
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -86,7 +82,7 @@ size_t connection_read_data_msg(struct connection *conn, void *buffer,
 		kfree_skb(conn->skb);
 		conn->skb = NULL;
 	}
-	MCDRV_DBG_VERBOSE(mc_kapi, "read %zu",  ret);
+	MCDRV_DBG_VERBOSE(mc_kapi, "read %u",  ret);
 	return ret;
 }
 
