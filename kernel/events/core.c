@@ -6765,6 +6765,9 @@ SYSCALL_DEFINE5(perf_event_open,
 	if (flags & ~PERF_FLAG_ALL)
 		return -EINVAL;
 
+	if (attr.constraint_duplicate || attr.__reserved_1) 
+		return -EINVAL; 
+
 	err = perf_copy_attr(attr_uptr, &attr);
 	if (err)
 		return err;
