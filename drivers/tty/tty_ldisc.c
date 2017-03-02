@@ -464,6 +464,7 @@ static void tty_set_termios_ldisc(struct tty_struct *tty, int num)
 
 	tty->disc_data = NULL;
 	tty->receive_room = 0;
+
 }
 
 /**
